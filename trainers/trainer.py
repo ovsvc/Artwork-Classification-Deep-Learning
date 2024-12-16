@@ -3,6 +3,7 @@ from typing import Tuple
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from tqdm import tqdm
+import numpy as np
 import sys
 sys.path.append('/Users/viktoriiaovsianik/Documents/Uni/04_WS2024/06_ADL/Code/ADL-WS-2024')
 from scripts.wandb_logger import WandBLogger
@@ -58,7 +59,9 @@ class ImgClassificationTrainer(BaseTrainer):
         training_save_dir: Path,
         debug_mode = False,
         batch_size: int = 4,
-        val_frequency: int = 5
+        val_frequency: int = 5,
+        patience: int = 3,
+
     ) -> None:
         """
         Initializes the trainer with model, data, metrics, etc.
@@ -78,6 +81,7 @@ class ImgClassificationTrainer(BaseTrainer):
         self.num_train_data = len(train_data)
         self.num_val_data = len(val_data)
         self.training_save_dir = training_save_dir
+        self.patience = patience
 
         #DataLoaders
         self.train_data_loader = torch.utils.data.DataLoader(
@@ -130,7 +134,7 @@ class ImgClassificationTrainer(BaseTrainer):
             epoch_loss += (loss.item() * batch_size)
             self.train_metric.update(outputs.detach().cpu(), labels.detach().cpu())
 
-            if self.debug_mode and i % 10 == 0:  # Print debug info every 10 batches
+            if self.debug_mode and i % 500 == 0:  # Print debug info every 10 batches
                 print(f"Batch {i}, Loss: {loss.item()}")
       
 
@@ -177,7 +181,7 @@ class ImgClassificationTrainer(BaseTrainer):
                 epoch_loss += loss.item() * batch_size
                 self.val_metric.update(outputs.cpu(), labels.cpu())
 
-            if self.debug_mode and i % 10 == 0:  # Print debug info every 10 batches
+            if self.debug_mode and i % 500 == 0:  # Print debug info every 10 batches
                 print(f"Batch {i}, Validation Loss: {loss.item()}")
 
         epoch_loss /= self.num_val_data
@@ -202,6 +206,8 @@ class ImgClassificationTrainer(BaseTrainer):
         """
 
         best_accuracy = 0.0
+        best_loss = np.inf
+        early_stopping_counter = 0 
 
         print(f"Training with batch size: {self.batch_size}")
 
@@ -217,14 +223,25 @@ class ImgClassificationTrainer(BaseTrainer):
                 wandb_log.update({"val/loss": val_loss, "val/acc": val_acc})
 
 
-                if best_accuracy <= val_acc:
+                if best_accuracy <= val_acc and best_loss >= val_loss:
                     print(f"#### Best accuracy {val_acc} at epoch {epoch_idx}")
                     print(f"#### Saving model to {self.training_save_dir}")
                     self.model.save(Path(self.training_save_dir), suffix="best")
                     best_accuracy = val_acc
+                    best_loss = val_loss
+                    early_stopping_counter = 0
+                else:
+                    early_stopping_counter += 1
+                    print(f"Early stopping counter: {early_stopping_counter}/{self.patience}")
+
 
                 if epoch_idx == self.num_epochs-1:
                     self.model.save(Path(self.training_save_dir), suffix="last")
+                
+                # Check if early stopping condition is met
+                if early_stopping_counter >= self.patience:
+                    print("Early stopping triggered.")
+                    break
 
             self.wandb_logger.log(wandb_log)
 

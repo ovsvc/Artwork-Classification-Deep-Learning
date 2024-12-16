@@ -61,6 +61,8 @@ class CustomDatasetPreprocessor:
         for directory in directories:
             for file in os.listdir(directory):
                 filepath = os.path.join(directory, file)
+                if not os.path.isfile(filepath) or file.startswith("."):
+                    continue
                 category = os.path.basename(os.path.dirname(filepath))
                 filepaths.append(filepath)
                 labels_type.append(label_type)

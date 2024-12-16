@@ -48,15 +48,16 @@ def initialize_trainer(config, device):
         # transforms.RandomHorizontalFlip(),
         # transforms.RandomRotation(15),
         # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        transforms.Resize(size=(32, 32), interpolation=transforms.InterpolationMode.NEAREST),
-       # transforms.ToTensor(),
+        transforms.Resize(size=(32, 32)),
+        transforms.ToTensor(),
        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     val_transform = transforms.Compose([
         #transforms.ToTensor(),
-        transforms.Resize(size=(32, 32), interpolation=transforms.InterpolationMode.NEAREST),
-       # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Resize(size=(32, 32)),
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.ToTensor(),
     ])
 
     debug_print("Loading training and validation data...", debug_mode)
@@ -67,7 +68,7 @@ def initialize_trainer(config, device):
 
     debug_print("Setting up the model and optimizer...", debug_mode)
     # Model, optimizer, and scheduler
-    model = CNN_Net().to(device)
+    model = config['model']
     optimizer = torch.optim.SGD(model.parameters(), lr=config['learning_rate'], momentum=0.9, nesterov=True)
     lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=config['scheduler_gamma'])
 
@@ -84,7 +85,7 @@ def initialize_trainer(config, device):
     model_save_dir.mkdir(exist_ok=True)
 
     return ImgClassificationTrainer(
-        model=model,
+        model=config['model'],
         optimizer=optimizer,
         loss_fn=loss_fn,
         lr_scheduler=lr_scheduler,
@@ -97,11 +98,14 @@ def initialize_trainer(config, device):
         training_save_dir=model_save_dir,
         batch_size=config['batch_size'],
         val_frequency=config['val_frequency'],
-        debug_mode=config['debug_mode']
+        debug_mode=config['debug_mode'],
+        patience = config['patience']
     )
 
 def train_model(config):
+    model = config['model']
     device = get_device(config['debug_mode'])
+    model = model.to(device)
     trainer = initialize_trainer(config, device)
     trainer.train()
     torch.save(trainer.model.state_dict(), Path(config['model_save_dir']) / "CNN_custom.pth")
