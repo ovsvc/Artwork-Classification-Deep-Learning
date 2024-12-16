@@ -39,9 +39,9 @@ class BaseTrainer(metaclass=ABCMeta):
         pass
 
 
-class ImgClassificationTrainer(BaseTrainer):
+class ImgClassification(BaseTrainer):
     """
-    Class that stores the logic for training a model for image classification.
+    Class that stores the logic for training and testing a model for image classification.
     """
 
     def __init__(
@@ -52,8 +52,10 @@ class ImgClassificationTrainer(BaseTrainer):
         lr_scheduler,
         train_metric,
         val_metric,
+        test_metric,
         train_data,
         val_data,
+        test_data,
         device,
         num_epochs: int, 
         training_save_dir: Path,
@@ -77,9 +79,11 @@ class ImgClassificationTrainer(BaseTrainer):
         self.train_metric = train_metric
         self.val_frequency = val_frequency
         self.val_metric = val_metric
+        self.test_metric = test_metric
         self.batch_size = batch_size    
         self.num_train_data = len(train_data)
         self.num_val_data = len(val_data)
+        self.num_test_data = len(test_data)
         self.training_save_dir = training_save_dir
         self.patience = patience
 
@@ -89,6 +93,9 @@ class ImgClassificationTrainer(BaseTrainer):
             num_workers = 0)
         self.val_data_loader = torch.utils.data.DataLoader(
             val_data, batch_size=self.batch_size, shuffle=False,
+            num_workers = 0)
+        self.test_data_loader = torch.utils.data.DataLoader(
+            test_data, batch_size=self.batch_size, shuffle=False,
             num_workers = 0)
 
         #WanDB Logger
@@ -203,6 +210,7 @@ class ImgClassificationTrainer(BaseTrainer):
         Save the model if mean per class accuracy on validation data set is higher
         than currently saved best mean per class accuracy.
         Depending on the val_frequency parameter, validation is not performed every epoch.
+
         """
 
         best_accuracy = 0.0
@@ -244,7 +252,71 @@ class ImgClassificationTrainer(BaseTrainer):
                     break
 
             self.wandb_logger.log(wandb_log)
+    
+    def test(self) -> Tuple[float, float, float]:
+        """
+        Tests the model on a given test dataset.
+        Prints the metrics and returns loss, accuracy, and per-class accuracy.
 
+        Args:
+            test_data (torch.utils.data.Dataset): Test dataset to evaluate on.
+            batch_size (int): Batch size for the test DataLoader.
+
+        Returns:
+            Tuple[float, float, float]: Test loss, mean accuracy, and mean per-class accuracy.
+        """
+
+        print("Testing the model...")
+
+        self.wandb_logger = WandBLogger(enabled=True, model=self.model, run_name=self.model._get_name())
+        
+
+        self.model.eval()  # Set model to evaluation mode
+        test_loss = 0.0
+        self.test_metric.reset()
+
+        all_labels = []
+        all_predictions = []
+
+        with torch.no_grad():
+            for i, batch in tqdm(enumerate(self.test_data_loader), desc="Test", total=len(self.test_data_loader)):
+                inputs, labels = batch
+                batch_size = inputs.size(0)
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+                # Forward pass
+                outputs = self.model(inputs)
+
+                # Compute loss
+                loss = self.loss_fn(outputs, labels)
+                test_loss += loss.item() * batch_size
+
+                # Update metrics
+                self.test_metric.update(outputs.cpu(), labels.cpu())
+
+                # Store original and predicted labels
+                all_labels.extend(labels.cpu().numpy())  # Convert to numpy for easier comparison
+                all_predictions.extend(torch.argmax(outputs, dim=1).cpu().numpy())
+
+        # Compute average loss
+        test_loss /= self.num_test_data
+
+        # Gather final metrics
+        test_accuracy = self.test_metric.accuracy()
+        test_per_class_accuracy = self.test_metric.per_class_accuracy()
+
+        # Convert labels and predictions to numpy arrays
+        all_labels = np.array(all_labels)
+        all_predictions = np.array(all_predictions)
+
+        if self.debug_mode:
+            print(f"Test Metrics: {self.test_metric}")
+        # Log metrics to WandB
+        self.wandb_logger.log({"test/loss": test_loss, "test/accuracy": test_accuracy})
+
+        return test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, self.test_metric.get_classes()
+    
+    
     def dispose(self) -> None:
         """
         Finish logging.

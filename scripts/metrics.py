@@ -119,6 +119,11 @@ class Accuracy(PerformanceMeasure):
         )
 
         return f"Overall Accuracy: {overall_acc:.4f}\n Per-Class Accuracy:\n{per_class_results}"
+    
+    def get_classes(self):
+        
+        return self.classes
+
 
 
 
