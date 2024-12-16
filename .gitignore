@@ -1,0 +1,32 @@
+# Ignore wandb directory
+wandb/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Ignore compiled Python files
+*.so
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore specific directories
+data/
+results/
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.iml
+
+# Ignore environment
+*.pth
