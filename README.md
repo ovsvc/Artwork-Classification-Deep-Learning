@@ -91,7 +91,7 @@ ADL-WS-2024/
 Dataset was collected from Kaggle. AI-ArtBench is a dataset that contains 180,000+ art images. 60,000 of them are human-drawn art that was directly taken from ArtBench-10 dataset and the rest is generated equally using Latent Diffusion and Standard Diffusion models. The human-drawn art is in 256x256 resolution and images generated using Latent Diffusion and Standard Diffusion has 256x256 and 768x768 resolutions respectively. Dataset already split into train and test parts and contains artworks from 10 different artistic styles. 
 
 Processing: `datasets.preprocessing.py`
-* Since the number of AI-generated artworks was higher in comparison to human ones, to balance the dataset I decided to select 5.000 images for each artistic style for each creation type (human, AI). Therefore, the final size of the training subset was (5.000 x 10 x2). Then I split the training subset into train and validation (90/10) and resized all the images to 256x256.
+* Since the number of AI-generated artworks was higher in comparison to human ones, to balance the dataset I decided to select 5.000 images for each artistic style for each creation type (human, AI). Therefore, the final size of the training subset was (5.000 x 10 x2). Then I split the training subset into train and validation (90/10) setting the seed to provide reproducibility and resized all the images to 256x256.
 * Labels were created with the logic {AI/human}_{artistic_style_name}
 
 Processing: `datasets.AIArtbench.py`
@@ -101,8 +101,12 @@ Processing: `datasets.AIArtbench.py`
 
 The main goal of the project was to predict the artistic style and creation type (human/AI) of the artwork (= Image Classification Problem).
 To solve the task the following models were selected:
+
 * Simple 4-layer CNN as a baseline
-* Fine-tuned ResNet18 model 
+I decided to start with a lightweight convolutional neural network designed for image classification. It features two convolutional layers with ReLU activation, followed by max pooling, and a fully connected layer with 20 output units. This simple structure served as a way to test if the whole pipeline works as expected as well as get a baseline measurement that I can improve throughout the project. 
+
+* Fine-tuned ResNet18 model
+In most articles on this topic, authors often focus on training the ResNet50 model. However, its complexity can lead to overfitting and requires substantial computational resources. Therefore, I opted for the simpler ResNet18 model, as more complex architectures often yield only marginal improvements in accuracy. During training, I froze the layers `['conv1', 'bn1', 'layer1', 'layer2']` to concentrate fine-tuning on the deeper layers, enhancing feature extraction and classification.
 
 **3. Training setup**
 
@@ -113,6 +117,7 @@ The training setup was similar for all models:
 * learning rate: 0.001
 * optimizer: SGD Optimizer
 * loss function: Cross entropy loss function
+* training resources: Google Colab GPU
 
 The logic for model training and testing can be found in `trainers.ImgClassification.py`.
 Helper functions to initialize the training and testing process are in `scripts.run_cnn.py`.
@@ -129,8 +134,46 @@ The main metric was overall accuracy and the goal was to find an approach that w
 
 **5. Results**
 
+**5.1 Simple CNN (baseline)**
 
 
- 
+| **Metric**              | **Value**  |
+|-------------------------|------------|
+| **Test Loss**            | 1.7142     |
+| **Test Accuracy**        | 45.12%     |
+| **Overall Precision**    | 44.83%     |
+| **Overall Recall**       | 45.12%     |
+| **Overall F1-Score**     | 44.03%     |
+| **Overall Accuracy**     | 45.12%     |
+
+The Simple CNN baseline model achieved a test accuracy of 45.12% on the classification task across various artistic styles and authenticity labels. On average, the model is correct about 44.83% of the time when it predicts a class. Even though on average the model performance is quite poor for some cases it showed satisfactory results:
+* Best performing classes: AI_renaissance (f1-score: 0.84), AI_baroque (f1-score: 0.69)
+* Worst performing classes: AI_post_impressionism (f1-score: 0.11), AI_surrealism (f1-score: 0.14) & human_surrealism (f1-fcore: 0.14), human_art_nouveau (f1-score: 0.16)
+* This model struggles not only to distinguish between artistic style but also to identify AI-generated and human-created artworks. 
+
+**5.2. ResNet18 (fine tuning)**
+
+| **Metric**              | **Value**  |
+|-------------------------|------------|
+| **Test Loss**            | 1.0741     |
+| **Test Accuracy**        | 63.18%     |
+| **Overall Precision**    | 62.85%     |
+| **Overall Recall**       | 63.18%     |
+| **Overall F1-Score**     | 62.78%     |
+| **Overall Accuracy**     | 63.18%     |
+
+The ResNet18 model achieved a Test Accuracy of 63.18% on the classification task across various artistic styles and authenticity labels. On average, the model is correct about 62.85% of the time when it predicts a class. Even though this model performs better than simple CNN it still has uneven performance across classes, thus:
+* Best performing Classes: AI_renaissance (f-1 score: 0.95) & human_romanticism (f-1 score: 0.83):
+* Worst performing Classes: AI_surrealism (f-1 score: 0.27), AI_post_impressionism (f-1 score: 0.22)  & human_expressionism (f-1 score: 0.33), human_impressionism (f-1 score: 0.23)
+* The model faces challenges with classes that exhibit subtle or overlapping features, likely due to similarities in artistic elements. Notably, the model's primary difficulty lies in identifying the correct artistic style rather than distinguishing originality. This means AI-generated images are generally recognized as AI-generated but are often misclassified into a different style. This knowledge can potentially help with further performance improvement.
+* Also it is important to mention that the training process for the model was stopped before reaching 10th epoch since the validation loss started to increase which is the sing of overfitting. 
+
+**6. Future Work**
+
+* Get More Insight into Model Predictions (XRAI):
+
+Implement XRAI or other explainability tools to better understand how the model makes predictions, particularly focusing on regions of images that are most influential for classification. This can help identify patterns and errors, particularly for complex class
+
+
 
 
