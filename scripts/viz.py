@@ -11,12 +11,11 @@ def imshow(img, save_path=None):
     """
     npimg = img.numpy()
     npimg = np.transpose(npimg, (1, 2, 0))  # (C, H, W) -> (H, W, C)
-    plt.imshow(npimg)
-    plt.axis('off')  # Remove axes for a cleaner display
-    plt.show()
 
-    if save_path:
-        plt.imsave(save_path, npimg)
+    plt.figure(figsize=(12, 8))
+    plt.imshow(npimg)
+    plt.axis('off')
+    plt.show()
 
 def display_images(data_loader, classes, num_images=8, save_path=None):
     """
@@ -34,11 +33,13 @@ def display_images(data_loader, classes, num_images=8, save_path=None):
     images = images[:num_images]
     labels = labels[:num_images]
 
-    # Make a grid of images
-    img_grid = vutils.make_grid(images, nrow=num_images)
+    # Make a grid of images (with spacing and padding)
+    img_grid = vutils.make_grid(images, nrow=4, padding=10, pad_value=255)  # Larger padding, white background
 
     # Display the grid
     imshow(img_grid, save_path=save_path)
 
-    # Print class labels
-    print(' '.join(f'{classes[label]:5s}' for label in labels))
+    # Print class labels (one per line)
+    print("Class Labels:")
+    for label in labels:
+        print(f'{classes[label]}')
