@@ -39,7 +39,7 @@ def plot_confusion_matrix(all_labels, all_predictions, classes, normalize=False,
     # Add labels
     ax.set_xticks(np.arange(len(classes)))
     ax.set_yticks(np.arange(len(classes)))
-    ax.set_xticklabels(classes, ha="right", fontsize=fontsize)
+    ax.set_xticklabels(classes, rotation = 90, ha="right", fontsize=fontsize)
     ax.set_yticklabels(classes, fontsize=fontsize)
     
     # Annotate cells with values, omitting zeros for tidiness
@@ -62,7 +62,7 @@ def plot_confusion_matrix(all_labels, all_predictions, classes, normalize=False,
 
 
 
-def analyze_test_results(test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, classes):
+def analyze_test_results_v2(test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, classes):
     """
     Analyzes the test results and calculates metrics such as confusion matrix, precision, recall, F1-score, 
     and accuracy. Plots the confusion matrix and prints a classification report.
