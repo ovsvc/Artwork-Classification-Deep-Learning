@@ -9,11 +9,10 @@ from scripts.metrics import Accuracy
 
 from trainers.ImgClassification import ImgClassification
 from datasets.dataset import Subset
-from models.cnn import CNN_Net
 from datasets.preprocessing import CustomDatasetPreprocessor
 from datasets.AIArtBench import AIArtbench
 
-# Add a debug flag to print statements at various stages
+
 def debug_print(message, debug_mode):
     if debug_mode:
         print(message)
@@ -175,96 +174,3 @@ def test_model(config, trainer=None):
     test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, test_classes = trainer.test()
     return (test_loss, test_accuracy, 
             test_per_class_accuracy, all_labels, all_predictions, test_classes)
-
-
-# def prepare_datasets(dataset_path, debug_mode, fraction=1):
-
-#     debug_print("Preprocessing dataset...", debug_mode)
-#     preprocessor = CustomDatasetPreprocessor(dataset_path=dataset_path)
-#     preprocessor.preprocess(fraction=fraction)
-#     return preprocessor.get_splits(fraction=fraction)
-
-# def initialize_model(config, device):
-    
-#     # Prepare datasets
-#     debug_mode = config['debug_mode']
-#     train_dataset, validation_dataset, test_dataset = prepare_datasets(config['dataset_path'], debug_mode, config['fraction'])
-
-#     debug_print(f"Train dataset length: {len(train_dataset)}", debug_mode)
-#     debug_print(f"Validation dataset length: {len(validation_dataset)}", debug_mode)
-#     debug_print(f"Test dataset length: {len(test_dataset)}", debug_mode)
-
-#     # Prepare the data for training
-#     debug_print("Preparing data transforms...", debug_mode)
-    
-#     # Transforms
-#     train_transform = config['train_transform']
-#     val_transform = config['val_transform']
-#     test_transform = config['test_transform']
-
-#     debug_print("Loading training and validation data...", debug_mode)
-#     train_data = AIArtbench(dataframe=train_dataset, subset=Subset.TRAINING, transform=train_transform)
-#     val_data = AIArtbench(dataframe=validation_dataset, subset=Subset.VALIDATION, transform=val_transform)
-#     test_data = AIArtbench(dataframe=test_dataset, subset=Subset.TEST, transform=test_transform)
-
-#     debug_print(f"Check loaded data: {len(train_data)}", debug_mode)
-
-#     debug_print("Setting up the model and optimizer...", debug_mode)
-#     # Model, optimizer, and scheduler
-#     model = config['model']
-#     optimizer = torch.optim.SGD(model.parameters(), lr=config['learning_rate'], momentum=0.9, nesterov=True)
-#     lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=config['scheduler_gamma'])
-
-#     # Debugging model setup
-#     debug_print(f"Model: {model}", debug_mode)
-
-#     # Loss and metrics
-#     loss_fn = torch.nn.CrossEntropyLoss()
-#     train_metric = Accuracy(classes=train_dataset['label'].unique())
-#     val_metric = Accuracy(classes=validation_dataset['label'].unique())
-#     test_metric = Accuracy(classes=test_dataset['label'].unique())
-
-#     # Trainer
-#     model_save_dir = Path(config['model_save_dir'])
-#     model_save_dir.mkdir(exist_ok=True)
-
-#     return ImgClassification(
-#         model=config['model'],
-#         optimizer=optimizer,
-#         loss_fn=loss_fn,
-#         lr_scheduler=lr_scheduler,
-#         train_metric=train_metric,
-#         val_metric=val_metric,
-#         test_metric = test_metric,
-#         train_data=train_data,
-#         val_data=val_data,
-#         test_data = test_data,
-#         device=device,
-#         num_epochs=config['epochs'],
-#         training_save_dir=model_save_dir,
-#         batch_size=config['batch_size'],
-#         val_frequency=config['val_frequency'],
-#         debug_mode=config['debug_mode'],
-#         patience = config['patience']
-#     )
-
-# def train_model(config):
-#     model = config['model']
-#     debug_mode=config['debug_mode']
-#     device = get_device(get_device(debug_mode=debug_mode))
-#     model = model.to(device)
-#     trainer = initialize_model(config, device)
-#     trainer.train()
-#     torch.save(trainer.model.state_dict(), Path(config['model_save_dir']) / "CNN_custom.pth")
-#     trainer.dispose()
-
-
-# def test_model(config, model):
-#     debug_mode=config['debug_mode']
-#     device = get_device(get_device(debug_mode=debug_mode))
-#     model = model.to(device)
-#     trainer = initialize_model(config, device)
-#     trainer.test()
-#     torch.save(trainer.model.state_dict(), Path(config['model_save_dir']) / "CNN_custom.pth")
-#     trainer.dispose()
-

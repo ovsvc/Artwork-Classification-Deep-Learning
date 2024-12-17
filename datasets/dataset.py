@@ -36,18 +36,3 @@ class Dataset(metaclass=ABCMeta):
 
         pass
 
-
-class ClassificationDataset(Dataset):
-    '''
-    Base class of image classification datasets.
-    Sample data are numpy arrays of shape (rows, cols) (grayscale) or (rows, cols, channels) (color).
-    Sample labels are integers from 0 to num_classes() - 1.
-    '''
-
-    @abstractmethod
-    def num_classes(self) -> int:
-        '''
-        Returns the number of classes.
-        '''
-
-        pass
