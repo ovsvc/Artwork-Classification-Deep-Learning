@@ -62,7 +62,7 @@ def plot_confusion_matrix(all_labels, all_predictions, classes, normalize=False,
 
 
 
-def analyze_test_results_v2(test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, classes):
+def analyze_test_results(test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, classes):
     """
     Analyzes the test results and calculates metrics such as confusion matrix, precision, recall, F1-score, 
     and accuracy. Plots the confusion matrix and prints a classification report.
