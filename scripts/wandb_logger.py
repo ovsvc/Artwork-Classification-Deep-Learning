@@ -1,8 +1,13 @@
 import torch
 import wandb
 from typing import Dict, Any
+from dotenv import load_dotenv
+import os
 
-wandb.login(key="146c67f6cba02f386817064e9aaafabb33c30236")
+# Get API key for logging
+load_dotenv()
+api_key = os.getenv('API_KEY')
+wandb.login(key=api_key)
 
 
 class WandBLogger:
@@ -12,9 +17,7 @@ class WandBLogger:
         model: torch.nn.Module = None,
         run_name: str = None,
         config: Dict[str, Any] = None,
-        project: str = "ADL" #,
-       # entity: str = "xx",
-       # group: str = "xx",
+        project: str = "ADL" 
     ) -> None:
         """
         Initialize WandB Logger.

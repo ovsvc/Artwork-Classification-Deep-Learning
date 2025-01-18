@@ -5,8 +5,22 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import sys
-sys.path.append('/Users/viktoriiaovsianik/Documents/Uni/04_WS2024/06_ADL/Code/ADL-WS-2024')
 from scripts.wandb_logger import WandBLogger
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
+# Get the project root path from environment variables
+import os
+project_root = os.getenv('PROJECT_ROOT_PATH')
+
+# Check if the environment variable is set correctly
+if project_root is None:
+    raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
+
+# Add the project root path to the system path
+sys.path.append(project_root)
 
 
 class BaseTrainer(metaclass=ABCMeta):
@@ -37,7 +51,6 @@ class BaseTrainer(metaclass=ABCMeta):
         """
 
         pass
-
 
 class ImgClassification(BaseTrainer):
     """
@@ -210,7 +223,6 @@ class ImgClassification(BaseTrainer):
         Save the model if mean per class accuracy on validation data set is higher
         than currently saved best mean per class accuracy.
         Depending on the val_frequency parameter, validation is not performed every epoch.
-
         """
 
         best_accuracy = 0.0
@@ -315,8 +327,7 @@ class ImgClassification(BaseTrainer):
         self.wandb_logger.log({"test/loss": test_loss, "test/accuracy": test_accuracy})
 
         return test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, self.test_metric.get_classes()
-    
-    
+
     def dispose(self) -> None:
         """
         Finish logging.

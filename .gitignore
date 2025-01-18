@@ -30,3 +30,4 @@ results/
 
 # Ignore environment
 *.pth
+.env

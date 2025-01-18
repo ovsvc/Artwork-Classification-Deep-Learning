@@ -1,16 +1,29 @@
 #Heere we train custom CNN without using pretrained models and any optimization -> baseline
-import sys
-sys.path.append('/Users/viktoriiaovsianik/Documents/Uni/04_WS2024/06_ADL/Code/ADL-WS-2024')
-
 import torch
-import torchvision.transforms as transforms
 from pathlib import Path
 from scripts.metrics import Accuracy
+import os
+import sys
 
 from trainers.ImgClassification import ImgClassification
 from datasets.dataset import Subset
 from datasets.preprocessing import CustomDatasetPreprocessor
 from datasets.AIArtBench import AIArtbench
+
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
+# Get the project root path from environment variables
+project_root = os.getenv('PROJECT_ROOT_PATH')
+
+# Check if the environment variable is set correctly
+if project_root is None:
+    raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
+
+# Add the project root path to the system path
+sys.path.append(project_root)
 
 
 def debug_print(message, debug_mode):
