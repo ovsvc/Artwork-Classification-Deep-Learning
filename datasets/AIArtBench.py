@@ -1,10 +1,7 @@
 import os
 import torch
-import pandas as pd
 from skimage import io
-#from torch.utils.data import Dataset
 from datasets.dataset import Subset, Dataset
-from torchvision import transforms
 from PIL import Image
 
 class AIArtbench(Dataset):
@@ -62,8 +59,5 @@ class AIArtbench(Dataset):
 
         # Convert the label to a tensor
         y_label = torch.tensor(label_idx, dtype=torch.long)
-
-             # Print image size before transformation
-       # print(f"Final image size: {image.shape}")
 
         return image, y_label

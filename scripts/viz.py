@@ -15,7 +15,17 @@ def imshow(img, save_path=None):
     plt.figure(figsize=(12, 8))
     plt.imshow(npimg)
     plt.axis('off')
+
+    # Save the image grid if save_path is provided
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')  # Save the image without extra whitespace
+        print(f"Image grid saved at {save_path}")
+
+
     plt.show()
+
+
+
 
 def display_images(data_loader, classes, num_images=8, save_path=None):
     """

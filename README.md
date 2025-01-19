@@ -72,8 +72,7 @@ ADL-WS-2024/
 │   ├── '2. ResNet [base].ipynb'             # Notebook for basic ResNet18 model training
 │   ├── '3. Resnet [augmentation].ipynb'     # Notebook for ResNet18 model training with data augmentation
 │   ├── '4. Resnet [best_model].ipynb'       # Notebook for ResNet18 model training with data augmentation and improved resolution
-│   ├── Data.ipynb                           # Notebook for data exploration and image printing
-│   └── train_images_grid.png                # Image grid of sample artworks
+│   └── Data.ipynb                           # Notebook for data exploration and image printing
 │
 ├── scripts/                                 # Standalone scripts
 │   ├── evaluation.py                        # Model evaluation metrics
