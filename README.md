@@ -187,6 +187,7 @@ The main metric was overall accuracy and the goal was to find an approach that w
 
 **5.1 Simple CNN (baseline)**
 
+Training & evaluation results can be found here `1. Simple CNN [baseline].ipynb`
 
 | **Metric**              | **Value**  |
 |-------------------------|------------|
@@ -202,6 +203,8 @@ The Simple CNN baseline model achieved a test accuracy of 45.12% on the classifi
 * This model struggles not only to distinguish between artistic style but also to identify AI-generated and human-created artworks. 
 
 **5.2. ResNet18 (fine tuning)**
+
+Training & evaluation results can be found here `2. ResNet [base].ipynb`
 
 | **Metric**              | **Value**  |
 |-------------------------|------------|
@@ -219,6 +222,8 @@ The ResNet18 model with transfer learning and frozen layers ['conv1', 'bn1', 'la
 
 **5.3. ResNet18 (fine tuning) with data augmentation**
 
+Training & evaluation results can be found here `3. ResNet [augmentation].ipynb`
+
 | **Metric**               | **Value**  |
 |--------------------------|------------|
 | **Test Loss**            | 0.9344     |
@@ -233,6 +238,8 @@ The ResNet18 model with data augmentation and non frozen parameter achieved a Te
 * The model struggles to classify correctly the same classes as model's previous version.
 
 **5.4. ResNet18 (fine tuning) with data augmentation and increased image resolution (224x224)**
+
+Training & evaluation results can be found here `4. ResNet [best model].ipynb`
 
 | **Metric**               | **Value**  |
 |--------------------------|------------|
