@@ -1,11 +1,34 @@
 import streamlit as st
 from PIL import Image
+import requests
 import torch
 import pandas as pd
+import os,sys
+
+# Define paths for all supporting files & dataset
+# Check if the code is running in Colab
+IN_COLAB = 'google.colab' in sys.modules
+
+if not IN_COLAB:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    project_root = os.getenv('PROJECT_ROOT_PATH')
+else:
+    # Set the project root path for Colab
+    project_root = userdata.get("project_root_path")
+
+# Check if the project root path is set correctly
+if project_root is None:
+    raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
+
+# Add the project root path to the system path
+sys.path.append(project_root)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-import predict
+
+import app.predict as predict
 
 
 st.title('🎨 Artwork classifier')
@@ -33,8 +56,26 @@ style_name = st.sidebar.selectbox(
 )
 
 
+
+# GitHub repository and release details
+GITHUB_API_URL = "https://github.com/ovsvc/ADL-WS-2024/releases/tag/v1"
+
+
+# Function to fetch releases from GitHub
+def get_releases():
+    response = requests.get(GITHUB_API_URL)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Failed to fetch releases from GitHub.")
+        return []
+
+
+
+
 # Proceed only if a model and image are selected
 if style_name and (img or uploaded_file):
+    model = Path(MODEL_DIR) / model_name
     model = "notebooks/final_model/" + style_name + ".pth"
     input_image = "data/app/" + img if img else uploaded_file
 
@@ -82,7 +123,7 @@ if style_name and (img or uploaded_file):
         # Ensure the image is a PIL image before passing it to the model
         if isinstance(image, Image.Image):
             # Perform the stylization or classification on the image
-            predicted_label, all_scores = predict.stylize(model, image)
+            predicted_label, all_scores = predict.classify(model, image)
             # Convert it into a DataFrame for better table formatting
             df = pd.DataFrame(all_scores, columns=["Class Label", "Confidence Score"])
             df = df.reset_index(drop=True)

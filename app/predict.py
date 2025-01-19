@@ -1,21 +1,26 @@
-import os
-import sys
+import os, sys
 import re
 import torch
 from torchvision import transforms
 import torch.onnx
 from PIL import Image
-import streamlit as st
 from models.resnet18 import ResNet18FineTuned
 
-# Load environment variables from .env file
-from dotenv import load_dotenv
-load_dotenv()
 
-# Get the project root path from environment variables
-project_root = os.getenv('PROJECT_ROOT_PATH')
+# Define paths for all supporting files & dataset
+# Check if the code is running in Colab
+IN_COLAB = 'google.colab' in sys.modules
 
-# Check if the environment variable is set correctly
+if not IN_COLAB:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    project_root = os.getenv('PROJECT_ROOT_PATH')
+else:
+    # Set the project root path for Colab
+    project_root = userdata.get("project_root_path")
+
+# Check if the project root path is set correctly
 if project_root is None:
     raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
 
@@ -23,6 +28,7 @@ if project_root is None:
 sys.path.append(project_root)
 
 
+# Define device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #@st.cache
@@ -41,7 +47,7 @@ def load_model(model_path, map_location=device):
         return classif_model
 
 #@st.cache
-def stylize(style_model, content_image, device='cpu'):
+def classify(classification_model, content_image, device='cpu'):
     """
     Applies the style model to the content image and returns the stylized output.
 
@@ -100,7 +106,7 @@ def stylize(style_model, content_image, device='cpu'):
 
     # Perform inference with the model
     with torch.no_grad():
-        output = style_model(content_image).cpu()  # Detach from GPU and move to CPU
+        output = classification_model(content_image).cpu()  # Detach from GPU and move to CPU
 
         # Get the predicted class index
         predicted_idx = torch.argmax(output, dim=1).cpu().numpy()[0]

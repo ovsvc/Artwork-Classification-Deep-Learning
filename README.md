@@ -88,39 +88,47 @@ ADL-WS-2024/
 ```
 ### 2. Installation
 
-Clone the repository:
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/ovsvc/ADL-WS-2024.git
 cd ADL-WS-2024
 ```
 
-Set up a Python environment (e.g., using Conda):
+2. Set up a Python environment (e.g., using Conda):
 
 ```bash
 conda create --name adl-ws-2024 python=3.11.11 -y
 conda activate adl-ws-2024
 ```
 
-Install the required dependencies:
+3. Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Set Up Environment Variables
+4. Set Up Environment Variables
 
-1. Create a .env file in the root of the project directory.
-2. Create the following variables in the .env file and add you own wandb api key, dataset path & root directory path:
+4.1. Create a .env file in the root of the project directory.
+4.2. Create the following variables in the .env file and add you own wandb api key, dataset path & root directory path:
 
 ```bash
 API_KEY=" "
 PROJECT_ROOT_PATH=" "
 DATASET_PATH=" "
 ```
-3. In case you are using GoogleColab for running models ensure that you have specified the same variables in your userdata. In case of running models using GoogleColab set 'PROJECT_ROOT_PATH' as the path to Google Drive folder where all scripts are stored. 
+4.3. In case you are using GoogleColab for running models ensure that you have specified the same variables in your userdata. In case of running models using GoogleColab set 'PROJECT_ROOT_PATH' as the path to Google Drive folder where all scripts are stored. 
 
-All models can be found and tested using `notebooks` section.
+5. All models can be found and tested using `notebooks` section.
+
+6. To start streamlit app run the following command in the terminal
+
+```bash
+streamlit run app/streamlit_app.py
+```
+Access the App in Your Browser: Once the command runs, Streamlit will provide a URL in the terminal (e.g., http://localhost:8501). Open this URL in your web browser to access the app.
+
 
 ------------
 
