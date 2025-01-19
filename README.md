@@ -54,37 +54,37 @@ AI-ArtBench is a dataset that contains 180,000+ art images. 60,000 of them are h
 ```bash
 ADL-WS-2024/
 │
-├── README.md                     # Project overview, setup, and instructions
-├── requirements.txt              # Python dependencies
-├── .gitignore                    # Ignore unnecessary files (e.g., __pycache__)
+├── README.md                               # Project overview, setup, and instructions
+├── requirements.txt                        # Python dependencies
+├── .gitignore                              # Ignore unnecessary files (e.g., __pycache__)
 │
-├── datasets/                     # Folder for dataset preprocessors
-│   ├── preprocessing.py          # Dataset preprocessing
-│   ├── dataset.py                # Base class for Dataset creation
-│   └── ALArtBench.py             # Class that organizes dataset in suitable format for pytorch.DataLoadr
+├── datasets/                               # Folder for dataset preprocessors
+│   ├── preprocessing.py                    # Dataset preprocessing
+│   ├── dataset.py                          # Base class for Dataset creation
+│   └── ALArtBench.py                       # Class that organizes dataset in suitable format for pytorch.DataLoadr
 │
-├── models/                       # Models for the project
-│   ├── resnet18.py               # ResNet18 fine-tuned implementation
-│   └── simple_cnn.py             # Simple CNN baseline
+├── models/                                  # Models for the project
+│   ├── resnet18.py                          # ResNet18 fine-tuned implementation
+│   └── simple_cnn.py                        # Simple CNN baseline
 │
-├── notebooks/                    # Jupyter notebooks for exploration
-│   ├── CNN.ipynb                 # Notebook for baseline model training
-│   ├── Data.ipynb                # Notebook for data exploration and image printing
-│   ├── ResNet.ipynb              # Notebook for basic ResNet18 model training
-│   ├── Resnet_augmentation.ipynb # Notebook for ResNet18 model training with data augmentation
-│   ├── Resnet_best_model.ipynb   # Notebook for ResNet18 model training with data augmentation and improved resolution
-│   └── train_images_grid.png     # Image grid of sample artworks
+├── notebooks/                               # Jupyter notebooks for exploration
+│   ├── '1. Simple CNN [baseline].ipynb'     # Notebook for baseline (CNN) model training
+│   ├── '2. ResNet [base].ipynb'             # Notebook for basic ResNet18 model training
+│   ├── '3. Resnet [augmentation].ipynb'     # Notebook for ResNet18 model training with data augmentation
+│   ├── '4. Resnet [best_model].ipynb'       # Notebook for ResNet18 model training with data augmentation and improved resolution
+│   ├── Data.ipynb                           # Notebook for data exploration and image printing
+│   └── train_images_grid.png                # Image grid of sample artworks
 │
-├── scripts/                      # Standalone scripts
-│   ├── evaluation.py             # Test model evaluation metrics
-│   ├── metrics.py                # Train and validation tracking metrics
-│   ├── run_cnn.py                # Script to run CNN training pipeline
-│   ├── viz.py                    # Visualization helpers
-│   └── wandb_logger.py           # Logging training metrics to Weights & Biases
+├── scripts/                                 # Standalone scripts
+│   ├── evaluation.py                        # Model evaluation metrics
+│   ├── metrics.py                           # Train and validation tracking metrics
+│   ├── run_cnn.py                           # Script to run CNN training pipeline
+│   ├── viz.py                               # Visualization helpers
+│   └── wandb_logger.py                      # Logging training metrics to Weights & Biases
 │
-├── trainers/                     # Training utilities
+├── trainers/                                # Training utilities
 │   ├── __init__.py
-│   └── ImgClassification.py      # Main image classification trainer
+│   └── ImgClassification.py                 # Main image classification trainer
 
 ```
 ### 2. Installation
@@ -108,6 +108,19 @@ Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+Set Up Environment Variables
+
+1. Create a .env file in the root of the project directory.
+2. Create the following variables in the .env file and add you own wandb api key, dataset path & root directory path:
+
+```bash
+API_KEY=" "
+PROJECT_ROOT_PATH=" "
+DATASET_PATH=" "
+```
+3. In case you are using GoogleColab for running models ensure that you have specified the same variables in your userdata. In case of running models using GoogleColab set 'PROJECT_ROOT_PATH' as the path to Google Drive folder where all scripts are stored. 
+
 All models can be found and tested using `notebooks` section.
 
 ------------
