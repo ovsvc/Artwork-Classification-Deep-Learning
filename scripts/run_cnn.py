@@ -5,25 +5,30 @@ from scripts.metrics import Accuracy
 import os
 import sys
 
-from trainers.ImgClassification import ImgClassification
-from datasets.dataset import Subset
-from datasets.preprocessing import CustomDatasetPreprocessor
-from datasets.AIArtBench import AIArtbench
+# Check if the code is running in Colab
+IN_COLAB = 'google.colab' in sys.modules
 
+if not IN_COLAB:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    project_root = os.getenv('PROJECT_ROOT_PATH')
+else:
+    from google.colab import userdata
+    # Set the project root path for Colab
+    project_root = userdata.get("project_root_path")
 
-# Load environment variables from .env file
-from dotenv import load_dotenv
-load_dotenv()
-
-# Get the project root path from environment variables
-project_root = os.getenv('PROJECT_ROOT_PATH')
-
-# Check if the environment variable is set correctly
+# Check if the project root path is set correctly
 if project_root is None:
     raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
 
 # Add the project root path to the system path
 sys.path.append(project_root)
+
+from trainers.ImgClassification import ImgClassification
+from datasets.dataset import Subset
+from datasets.preprocessing import CustomDatasetPreprocessor
+from datasets.AIArtBench import AIArtbench
 
 
 def debug_print(message, debug_mode):

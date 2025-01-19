@@ -1,14 +1,28 @@
 import torch
 import wandb
 from typing import Dict, Any
-from dotenv import load_dotenv
-import os
+import os, sys
+
+# Check if the code is running in Colab
+IN_COLAB = 'google.colab' in sys.modules
 
 # Get API key for logging
-load_dotenv()
-api_key = os.getenv('API_KEY')
-wandb.login(key=api_key)
+if IN_COLAB:
+    # In Colab, read API key from user data
+    from google.colab import userdata
+    api_key = userdata.get("api_key")
+    if api_key is None:
+        raise ValueError("API_KEY is not set in Colab user data.")
+else:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv('API_KEY')
+    if api_key is None:
+        raise ValueError("API_KEY is not set in the .env file.")
 
+# Login to wandb
+wandb.login(key=api_key)
 
 class WandBLogger:
     def __init__(
