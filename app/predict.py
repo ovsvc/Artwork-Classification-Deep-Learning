@@ -1,10 +1,9 @@
-import os, sys
+import os, sys, requests
 import re
 import torch
 from torchvision import transforms
 import torch.onnx
 from PIL import Image
-from models.resnet18 import ResNet18FineTuned
 
 
 # Define paths for all supporting files & dataset
@@ -27,26 +26,76 @@ if project_root is None:
 # Add the project root path to the system path
 sys.path.append(project_root)
 
+from models.resnet18 import ResNet18FineTuned
+from models.simple_cnn import Simple_CNN
+
 
 # Define device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-#@st.cache
-def load_model(model_path, map_location=device):
-    print('load model')
-    with torch.no_grad():
-        classif_model = ResNet18FineTuned()
-        state_dict = torch.load(model_path, map_location=device)
-        # remove saved deprecated running_* keys in InstanceNorm from the checkpoint
-        for k in list(state_dict.keys()):
-            if re.search(r'in\d+\.running_(mean|var)$', k):
-                del state_dict[k]
-        classif_model.load_state_dict(state_dict)
-        classif_model.to(device)
-        classif_model.eval()
-        return classif_model
+def download_model(model_url, save_path):
+    """
+    Download a model from a URL and save it to the specified local file path.
+    Ensures that the downloaded content is valid.
+    """
+    print(model_url)
+    response = requests.get(model_url)
+    if response.status_code == 200:
+        # Check if the response is a valid PyTorch model (simple content check)
+       # if b'PYTORCH' in response.content:
+            with open(save_path, 'wb') as f:
+                f.write(response.content)
+          #  print(f"Model downloaded successfully to {save_path}")
+        #else:
+         #   print("Downloaded file is not a valid PyTorch model.")
+         #   raise Exception("Error: Downloaded file is not a valid PyTorch model.")
+    else:
+        print(f"Failed to download model from {model_url}")
+        raise Exception(f"Error {response.status_code}: Unable to download model.")
 
-#@st.cache
+
+# Load model's dict
+def load_model(model_url, model_filename, type):
+    """
+    Load a model from the 'loaded_models' directory in the current working directory (WD).
+    If the model is not present, download it first.
+    """
+    # Get the current working directory
+    current_wd = os.getcwd()
+
+    # Create 'loaded_models' directory if it doesn't exist
+    model_dir = os.path.join(current_wd, 'loaded_models')
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)  # Create the directory
+
+    # Set the full model path inside the 'loaded_models' directory
+    model_path = os.path.join(model_dir, model_filename)
+
+    # Check if the model file exists locally, if not, download it
+    if not os.path.exists(model_path):
+        print(f"Model not found locally, downloading from {model_url}")
+        download_model(model_url, model_path)
+
+    # Load the model using PyTorch
+    state_dict = torch.load(model_path, map_location= device) 
+
+    # Define model
+    if type == "CNN":
+        classif_model = Simple_CNN()
+    else:
+        classif_model = ResNet18FineTuned()
+    
+    # Remove saved deprecated running_* keys in InstanceNorm from the checkpoint
+    for k in list(state_dict.keys()):
+        if re.search(r'in\d+\.running_(mean|var)$', k):
+            del state_dict[k]
+    classif_model.load_state_dict(state_dict)
+    classif_model.to(device)
+    classif_model.eval()
+
+    return classif_model
+
+# perform Classification
 def classify(classification_model, content_image, device='cpu'):
     """
     Applies the style model to the content image and returns the stylized output.
