@@ -6,6 +6,14 @@ import torch.onnx
 from PIL import Image
 
 
+import torch
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from torchvision import transforms
+from PIL import Image
+
+
 # Define paths for all supporting files & dataset
 # Check if the code is running in Colab
 IN_COLAB = 'google.colab' in sys.modules
@@ -95,28 +103,64 @@ def load_model(model_url, model_filename, type):
 
     return classif_model
 
+
+
+def generate_heatmap(activations, gradients, image_size):
+    """Generate Grad-CAM heatmap."""
+
+    pooled_gradients = np.mean(gradients.detach().cpu().numpy(), axis=(2, 3))[0]
+    activations = activations.detach().cpu().numpy()[0]
+
+    for i in range(activations.shape[0]):
+        activations[i, :, :] *= pooled_gradients[i]
+    
+    heatmap = np.mean(activations, axis=0)
+    heatmap = np.maximum(heatmap, 0) / np.max(heatmap)  
+    
+    return cv2.resize(heatmap, image_size[::-1])  
+
+
+def overlay_heatmap(image, heatmap, alpha=0.5):
+    """
+    Overlay the heatmap on top of the image with the specified alpha transparency
+    without modifying the original image.
+    """
+
+    if isinstance(image, torch.Tensor):
+        image = image.squeeze(0).cpu() 
+        image = transforms.ToPILImage()(image)  
+
+    image_np = np.array(image.convert('RGB')) 
+    image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)  
+
+    image_copy = image_bgr.copy()
+    heatmap = cv2.resize(heatmap, (image_copy.shape[1], image_copy.shape[0]))
+
+    if len(heatmap.shape) == 2:
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_GRAY2BGR)
+
+    heatmap = np.uint8(heatmap * 255)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    overlay = cv2.addWeighted(image_copy, 1 - alpha, heatmap, alpha, 0)
+    overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+
+    return overlay_rgb
+
+
 # perform Classification
 def classify(classification_model, content_image, device='cpu'):
-    """
-    Applies the style model to the content image and returns the stylized output.
 
-    Args:
-        style_model (torch.nn.Module): Pretrained style transfer model.
-        content_image (str or PIL.Image.Image): Path to the content image or a PIL image.
-        device (str): The device to run the model on ('cpu' or 'cuda').
-
-    Returns:
-        torch.Tensor: The output image tensor from the style model.
-    """
     # Load the image if a path is provided
     if isinstance(content_image, str):
         content_image = Image.open(content_image).convert('RGB')
+
+    original_size = content_image.size  # (width, height)
     
     # Define the transformation pipeline
     content_transform = transforms.Compose([
         transforms.Resize(size=(224, 224)),  # Resize image
-        transforms.ToTensor(),              # Convert to Tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
+        transforms.ToTensor()              # Convert to Tensor
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
     ])
     
     # Apply transformations
@@ -153,22 +197,61 @@ def classify(classification_model, content_image, device='cpu'):
     idx_to_class = {idx: label for label, idx in class_to_idx.items()}
 
 
+    # Grad-CAM variables
+    activations = []
+    gradients = []
+
+    def forward_hook(module, input, output):
+        """
+        Capture the activations of the target layer.
+        """
+        activations.append(output)
+
+    def backward_hook(module, grad_input, grad_output):
+        """
+        Capture the gradients of the target layer.
+        """
+        gradients.append(grad_output[0])
+
+    # Register hooks for the target layer if ResNet
+    if isinstance(classification_model, ResNet18FineTuned):
+        target_layer = classification_model.resnet18.layer4[1].conv2
+        target_layer.register_forward_hook(forward_hook)
+        target_layer.register_full_backward_hook(backward_hook)
+    
+    # Register hooks for the last convolutional layer if Simple_CNN
+    elif isinstance(classification_model, Simple_CNN):
+        # Assuming 'conv3' is the last convolutional layer in Simple_CNN
+        target_layer = classification_model.conv2
+        target_layer.register_forward_hook(forward_hook)
+        target_layer.register_full_backward_hook(backward_hook)
+
+
     # Perform inference with the model
-    with torch.no_grad():
-        output = classification_model(content_image).cpu()  # Detach from GPU and move to CPU
+    #with torch.no_grad():
+    output = classification_model(content_image).cpu()  # Detach from GPU and move to CPU
 
-        # Get the predicted class index
-        predicted_idx = torch.argmax(output, dim=1).cpu().numpy()[0]
-        predicted_label = idx_to_class[predicted_idx]
 
-        # Get the sorted scores for all classes
-        softmax_output = torch.nn.functional.softmax(output, dim=1)  # Apply softmax to get probabilities
-        sorted_scores, sorted_indices = torch.sort(softmax_output, descending=True)
-        
-        # Create a sorted list of class labels and their scores
-        sorted_labels = [idx_to_class[idx.item()] for idx in sorted_indices[0]]
-        # Convert the scores to integers (by rounding them or casting to int)
-        sorted_scores_int = sorted_scores[0].cpu().numpy().astype(float)
+    # Get the predicted class index
+    predicted_idx = torch.argmax(output, dim=1).cpu().numpy()[0]
+    predicted_label = idx_to_class[predicted_idx]
 
-    return predicted_label, list(zip(sorted_labels, sorted_scores_int))
+    #Backward pass for gradients (only for Grad-CAM)
+    classification_model.zero_grad()  # Clear existing gradients
+    output[0, predicted_idx].backward()  # Compute gradients for the predicted class index
+
+    heatmap = generate_heatmap(activations[0], gradients[0], original_size)
+    overlay = overlay_heatmap(content_image, heatmap)
+
+    # Get the sorted scores for all classes
+    softmax_output = torch.nn.functional.softmax(output, dim=1)  # Apply softmax to get probabilities
+    sorted_scores, sorted_indices = torch.sort(softmax_output, descending=True)
+
+    # Create a sorted list of class labels and their scores
+    sorted_labels = [idx_to_class[idx.item()] for idx in sorted_indices[0]]
+
+    # Convert the scores to integers (by rounding them or casting to int)
+    sorted_scores_int = sorted_scores[0].cpu().detach().numpy().astype(float)
+
+    return predicted_label, list(zip(sorted_labels, sorted_scores_int)), overlay, heatmap
             

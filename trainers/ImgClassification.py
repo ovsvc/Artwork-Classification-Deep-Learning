@@ -316,7 +316,7 @@ class ImgClassification(BaseTrainer):
                 gradients.append(grad_output[0])
 
             # Register hooks for the target layer
-            target_layer = self.model.layer4[1].conv2
+            target_layer = self.model.resnet18.layer4[1].conv2
             target_layer.register_forward_hook(forward_hook)
             target_layer.register_full_backward_hook(backward_hook)
    

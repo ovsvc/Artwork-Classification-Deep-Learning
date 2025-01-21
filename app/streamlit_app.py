@@ -158,7 +158,7 @@ with tab1:
             # Ensure the image is a PIL image before passing it to the model
             if isinstance(image, Image.Image):
                 # Perform the classification on the image
-                predicted_label, all_scores = predict.classify(model, image)
+                predicted_label, all_scores, heatmap_image, heatmap_data = predict.classify(model, image)
 
                 # Convert it into a DataFrame for better table formatting
                 df = pd.DataFrame(all_scores, columns=["Class Label", "Confidence Score"])
@@ -168,15 +168,19 @@ with tab1:
                 st.write("Error: The uploaded image is not a valid format.")
 
             st.write('#### 📄 Evaluation Results')
+            
+        
 
-            # Display the predicted label with styling
-            st.markdown('##### **1. Predicted Label**')
-            st.markdown(f"`{predicted_label}` is the predicted label for this artwork.")
+            # Show the image with the Grad-CAM heatmap overlay
+            st.write(f'##### **1. Original Image with Grad-CAM Overlay**')
+            st.image(heatmap_image, caption=f"Prediction: {predicted_label}",  width = 400)
+            st.write(f' ▶️ Heatmap shows features important for classification')
+
             st.markdown("---")
-
             # Display a message about the sorted class indices and confidence scores
             st.markdown('##### **2. Sorted Class Indices and Confidence Scores**')
             st.markdown("Here are the top 5 other labels with their confidence scores:")
+
 
             # Style the DataFrame and center the text for a better look
             st.markdown("""
