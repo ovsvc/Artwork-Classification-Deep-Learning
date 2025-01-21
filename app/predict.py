@@ -159,10 +159,11 @@ def classify(classification_model, content_image, device='cpu'):
     # Define the transformation pipeline
     content_transform = transforms.Compose([
         transforms.Resize(size=(224, 224)),  # Resize image
-        transforms.ToTensor()              # Convert to Tensor
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
+        transforms.ToTensor(),              # Convert to Tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
     ])
     
+    original_image = content_image
     # Apply transformations
     content_image = content_transform(content_image).unsqueeze(0).to(device)  # Add batch dimension
 
@@ -241,7 +242,7 @@ def classify(classification_model, content_image, device='cpu'):
     output[0, predicted_idx].backward()  # Compute gradients for the predicted class index
 
     heatmap = generate_heatmap(activations[0], gradients[0], original_size)
-    overlay = overlay_heatmap(content_image, heatmap)
+    overlay = overlay_heatmap(original_image, heatmap)
 
     # Get the sorted scores for all classes
     softmax_output = torch.nn.functional.softmax(output, dim=1)  # Apply softmax to get probabilities
