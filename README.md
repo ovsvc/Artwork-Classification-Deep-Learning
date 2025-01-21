@@ -282,8 +282,14 @@ Based on the evaluation results of the previous models it became clear that the 
 **Correctly classified images**
 ![image](https://github.com/user-attachments/assets/da380adc-9498-4b19-a46f-3735328d5178)
 
-To add some explainability I included Gradient-weighted Class Activation Map plotted over images. Those maps show what features were important for the model to make prediction. 
+To add some explainability I included **Gradient-weighted Class Activation Maps** plotted over images. Those maps show what features were important for the model to make predictions. 
+
+**Incorrectly classified images**
 ![image](https://github.com/user-attachments/assets/f11a6866-737e-4cfd-b1dd-d63c8c1314f6)
+
+**Correctly classified images**
+![image](https://github.com/user-attachments/assets/19151a9a-2f20-4085-8d29-e6650f400a98)
+
 
 **5.3. Train vs Validation Results**
 
