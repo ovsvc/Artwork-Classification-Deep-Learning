@@ -39,9 +39,10 @@ AI-ArtBench is a dataset that contains 180,000+ art images. 60,000 of them are h
 | Dataset collection                               | 2 hours           | 2 hours | Completed |
 | Dataset preprocessing                            | 4 hours           | 12 hours| Completed |
 | Designing & building network                     | 32 hours         | 24 hours| Completed |
-| Fine-Tuning                                      | 32 hours          | xx| In Progress|
-| Demo App                                         | 32 hours         | xx | Not Started |
-| Report & Presentation                            | 10 hours           | xx | Not Started |
+| Fine-Tuning                                      | 32 hours          | 12 hours| Completed
+| Additional Fix                                   | 5 hours          | 12 hours| Completed
+| Demo App                                         | 32 hours         | 12 hours | Completed |
+| Report & Presentation                            | 10 hours           | 4 hours | Completed |
 
 -----
 
@@ -309,9 +310,3 @@ Legend description:
 * ResNet18 (fine tuning + data augmentation + no freeze + improved resolution) -  Fine-tuning with unfrozen layers, less aggressive data augmentation and improved resolution, description: section 2.3 (third variation)
 
 For some model early stopping criteria was triggered, therefore, thaining was stopped before reaching 10th epoch. 
-
-**6. Future Work**
-
-* Get More Insight into Model Predictions (XRAI):
-
-Implement XRAI or other explainability tools to better understand how the model makes predictions, particularly focusing on regions of images that are most influential for classification. This can help identify patterns and errors, particularly for complex class.
