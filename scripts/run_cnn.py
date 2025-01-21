@@ -189,6 +189,6 @@ def test_model(config, trainer=None):
         trainer = initialize_trainer(config, datasets, model_components, device)
         trainer.model.load_state_dict(torch.load(Path(config['model_save_dir']) / f"{config['model_name']}.pth", map_location=device))
 
-    test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, test_classes = trainer.test()
+    test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, test_classes,  activations, gradients = trainer.test()
     return (test_loss, test_accuracy, 
-            test_per_class_accuracy, all_labels, all_predictions, test_classes)
+            test_per_class_accuracy, all_labels, all_predictions, test_classes,  activations, gradients)

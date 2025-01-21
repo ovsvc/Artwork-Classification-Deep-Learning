@@ -1,27 +1,35 @@
-import torch
+import torch, os
 from typing import Tuple
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import sys
-from scripts.wandb_logger import WandBLogger
 
-# Load environment variables from .env file
-from dotenv import load_dotenv
-load_dotenv()
 
-# Get the project root path from environment variables
-import os
-project_root = os.getenv('PROJECT_ROOT_PATH')
 
-# Check if the environment variable is set correctly
+# Check if the code is running in Colab
+IN_COLAB = 'google.colab' in sys.modules
+
+if not IN_COLAB:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    project_root = os.getenv('PROJECT_ROOT_PATH')
+    
+else:
+    from google.colab import userdata
+    # Set the project root path for Colab
+    project_root = userdata.get("project_root_path")
+
+# Check if the project root path is set correctly
 if project_root is None:
     raise ValueError("PROJECT_ROOT_PATH environment variable is not set.")
 
 # Add the project root path to the system path
 sys.path.append(project_root)
 
+from scripts.wandb_logger import WandBLogger
 
 class BaseTrainer(metaclass=ABCMeta):
     """
@@ -264,7 +272,7 @@ class ImgClassification(BaseTrainer):
                     break
 
             self.wandb_logger.log(wandb_log)
-    
+
     def test(self) -> Tuple[float, float, float]:
         """
         Tests the model on a given test dataset.
@@ -284,31 +292,64 @@ class ImgClassification(BaseTrainer):
         
 
         self.model.eval()  # Set model to evaluation mode
+
+        print("Model name...", self.model._get_name())
+
+        # Grad-CAM variables
+        activations = []
+        gradients = []
+
+        if self.model._get_name() == "ResNet18FineTuned":
+             # Define hooks to capture activations and gradients
+
+
+            def forward_hook(module, input, output):
+                """
+                Capture the activations of the target layer.
+                """
+                activations.append(output)
+
+            def backward_hook(module, grad_input, grad_output):
+                """
+                Capture the gradients of the target layer.
+                """
+                gradients.append(grad_output[0])
+
+            # Register hooks for the target layer
+            target_layer = self.model.layer4[1].conv2
+            target_layer.register_forward_hook(forward_hook)
+            target_layer.register_full_backward_hook(backward_hook)
+   
+
         test_loss = 0.0
         self.test_metric.reset()
 
         all_labels = []
         all_predictions = []
 
-        with torch.no_grad():
-            for i, batch in tqdm(enumerate(self.test_data_loader), desc="Test", total=len(self.test_data_loader)):
-                inputs, labels = batch
-                batch_size = inputs.size(0)
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+        #with torch.no_grad():
+        for i, batch in tqdm(enumerate(self.test_data_loader), desc="Test", total=len(self.test_data_loader)):
+            inputs, labels = batch
+            batch_size = inputs.size(0)
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                # Forward pass
-                outputs = self.model(inputs)
+            outputs = self.model(inputs)
 
-                # Compute loss
-                loss = self.loss_fn(outputs, labels)
-                test_loss += loss.item() * batch_size
+            # Compute loss
+            loss = self.loss_fn(outputs, labels)
+            test_loss += loss.item() * batch_size
 
-                # Update metrics
-                self.test_metric.update(outputs.cpu(), labels.cpu())
+            # Backward pass for gradients (only if Grad-CAM hooks are active)
+            if self.model._get_name() == "ResNet18FineTuned":
+                self.model.zero_grad()  # Clear existing gradients
+                loss.backward()  # Compute gradients
 
-                # Store original and predicted labels
-                all_labels.extend(labels.cpu().numpy())  # Convert to numpy for easier comparison
-                all_predictions.extend(torch.argmax(outputs, dim=1).cpu().numpy())
+            # Update metrics
+            self.test_metric.update(outputs.cpu(), labels.cpu())
+
+            # Store original and predicted labels
+            all_labels.extend(labels.cpu().numpy())  # Convert to numpy for easier comparison
+            all_predictions.extend(torch.argmax(outputs, dim=1).cpu().numpy())
 
         # Compute average loss
         test_loss /= self.num_test_data
@@ -326,7 +367,7 @@ class ImgClassification(BaseTrainer):
         # Log metrics to WandB
         self.wandb_logger.log({"test/loss": test_loss, "test/accuracy": test_accuracy})
 
-        return test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, self.test_metric.get_classes()
+        return test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, self.test_metric.get_classes(), activations, gradients
 
     def dispose(self) -> None:
         """

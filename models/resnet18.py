@@ -24,7 +24,7 @@ class ResNet18FineTuned(nn.Module):
 
         self.get_trainable_params()
         
-        self.name = "ResNet18_FineTuned"
+        self.name = "ResNet18"
 
     
     def freeze_all_layers(self):

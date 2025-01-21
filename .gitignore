@@ -31,3 +31,4 @@ results/
 # Ignore environment
 *.pth
 .env
+notebooks/4_ResNet_\[best_model]_CAM experiments.ipynb

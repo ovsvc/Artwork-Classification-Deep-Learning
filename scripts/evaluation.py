@@ -1,4 +1,6 @@
 import numpy as np
+import cv2
+import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
     confusion_matrix,
@@ -58,10 +60,6 @@ def plot_confusion_matrix(all_labels, all_predictions, classes, normalize=False,
 
     return cm
 
-
-
-
-
 def analyze_test_results(test_loss, test_accuracy, test_per_class_accuracy, all_labels, all_predictions, classes):
     """
     Analyzes the test results and calculates metrics such as confusion matrix, precision, recall, F1-score, 
@@ -112,3 +110,19 @@ def analyze_test_results(test_loss, test_accuracy, test_per_class_accuracy, all_
     print(f"Overall Accuracy: {accuracy:.4f}")
 
     return metrics
+
+    """
+    Overlays the Grad-CAM heatmap on the original image.
+    """
+    # Resize the Grad-CAM to match the image size
+    grad_cam_resized = cv2.resize(grad_cam, (image.shape[2], image.shape[3]))
+
+    # Create a color heatmap
+    heatmap = np.uint8(255 * grad_cam_resized)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+
+    # Overlay the heatmap on the image
+    overlay = heatmap * alpha + image.transpose(1, 2, 0) * (1 - alpha)
+    overlay = np.uint8(overlay)
+
+    return overlay
