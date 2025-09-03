@@ -1,4 +1,4 @@
-# ADL-WS-2024
+# Artwork Classification Deep Learning (ADL-WS-2024)
 Repository for ADL project for WS24
 Author: Viktoriia Ovsianik (12217985)
 
